@@ -5,14 +5,11 @@ import requests
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib
-import matplotlib.font_manager as fm
 import folium
 from streamlit_folium import st_folium
 
 # 나눔고딕 경로 직접 지정
-font_path = '/usr/share/fonts/truetype/nanum/NanumGothic.ttf'
-fm.fontManager.addfont(font_path)
-matplotlib.rcParams['font.family'] = fm.FontProperties(fname=font_path).get_name()
+matplotlib.rcParams['font.family'] = 'DejaVu Sans'
 matplotlib.rcParams['axes.unicode_minus'] = False
 
 API_URL = "https://seongnam-api.onrender.com/predict"
