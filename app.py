@@ -11,13 +11,9 @@ from streamlit_folium import st_folium
 
 
 # 나눔고딕 경로 직접 지정
-import urllib.request
-import os
+import matplotlib.font_manager as fm
 
-font_url = "https://github.com/naver/nanumfont/raw/master/fonts/NanumGothic.ttf"
-font_path = "/tmp/NanumGothic.ttf"
-if not os.path.exists(font_path):
-    urllib.request.urlretrieve(font_url, font_path)
+font_path = '/usr/share/fonts/truetype/nanum/NanumGothic.ttf'
 fm.fontManager.addfont(font_path)
 matplotlib.rcParams['font.family'] = fm.FontProperties(fname=font_path).get_name()
 matplotlib.rcParams['axes.unicode_minus'] = False
