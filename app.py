@@ -86,7 +86,7 @@ if st.sidebar.button("🔍 위험도 예측하기"):
     else:
         col2.success("🟢 비교적 안전한 지역입니다.")
 
-    # ── 2. 인터랙티브 지도 (Folium 적용) ──
+    
     # ── 2. 지도 ──
     st.markdown("---")
     st.subheader("🗺️ 성남시 위험도 지도")
@@ -114,7 +114,10 @@ if st.sidebar.button("🔍 위험도 예측하기"):
     ax_map.xaxis.set_major_formatter(matplotlib.ticker.FormatStrFormatter('%.3f'))
     ax_map.yaxis.set_major_formatter(matplotlib.ticker.FormatStrFormatter('%.3f'))
     ax_map.set_title(f"Seongnam Risk Map - {dong_name}", fontsize=12)
-    ax_map.set_xlabel("L
+    ax_map.set_xlabel("Longitude")
+    ax_map.set_ylabel("Latitude")
+    plt.tight_layout()
+    st.pyplot(fig_map)
 
     # ── 3. SHAP XAI 폭포수 그래프 (Plotly 적용 - 한글 깨짐 완벽 방지) ──
     if shap:
