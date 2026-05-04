@@ -9,9 +9,16 @@ import folium
 from streamlit_folium import st_folium
 
 # 나눔고딕 경로 직접 지정
-matplotlib.rcParams['font.family'] = 'DejaVu Sans'
-matplotlib.rcParams['axes.unicode_minus'] = False
+import urllib.request
+import os
 
+font_url = "https://github.com/naver/nanumfont/raw/master/fonts/NanumGothic.ttf"
+font_path = "/tmp/NanumGothic.ttf"
+if not os.path.exists(font_path):
+    urllib.request.urlretrieve(font_url, font_path)
+fm.fontManager.addfont(font_path)
+matplotlib.rcParams['font.family'] = fm.FontProperties(fname=font_path).get_name()
+matplotlib.rcParams['axes.unicode_minus'] = False
 API_URL = "https://seongnam-api.onrender.com/predict"
 
 dong_options = {
