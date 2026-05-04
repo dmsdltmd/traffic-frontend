@@ -95,4 +95,37 @@ if st.sidebar.button("🔍 위험도 예측하기"):
     for name, (code, d_lat, d_lng) in dong_options.items():
         if name == dong_name:
             c = "red" if status == "위험" else "green"
+            ax_map.scatter(d_lng, d_lat, s=300, color=c, zorder=5)
+            ax_map.annotate(f"{name}\n{score}점", (d_lng, d_lat),
+                            textcoords="offset points", xytext=(6, 6),
+                            fontsize=10, color=c, fontweight='bold')
+        else:
+            ax_map.scatter(d_lng, d_lat, s=100, color="gray", alpha=0.5, zorder=3)
+            ax_map.annotate(name, (d_lng, d_lat),
+                            textcoords="offset points", xytext=(4, 4),
+                            fontsize=9, color="#555555")
+    ax_map.xaxis.set_major_formatter(matplotlib.ticker.FormatStrFormatter('%.3f'))
+    ax_map.yaxis.set_major_formatter(matplotlib.ticker.FormatStrFormatter('%.3f'))
+    ax_map.set_title(f"성남시 법정동 위험도 지도 - {dong_name} 선택됨", fontsize=12)
+    ax_map.set_xlabel("경도")
+    ax_map.set_ylabel("위도")
+    plt.tight_layout()
+    st.pyplot(fig_map)
+
+    # ── SHAP Waterfall (Plotly - 한글 완벽 지원) ──
+    if shap:
+        st.markdown("---")
+        st.subheader("🔍 위험도 원인 분석 (SHAP Waterfall)")
+        st.caption("각 법규 위반 항목이 위험도 점수에 얼마나 기여했는지 보여줍니다.")
+        fig = go.Figure(go.Waterfall(
+            orientation="v",
+            measure=["relative"] * len(shap),
+            x=list(shap.keys()),
+            textposition="outside",
+            text=[f"{v:+.1f}" for v in shap.values()],
+            y=list(shap.values()),
+            connector={"line": {"color": "rgb(63, 63, 63)"}}
+        ))
+        fig.update_layout(showlegend=False, margin=dict(l=20, r=20, t=30, b=20))
+        st.plotly_chart(fig, use_container_width=True)
 
