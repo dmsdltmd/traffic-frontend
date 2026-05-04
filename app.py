@@ -1,4 +1,3 @@
-
 import streamlit as st
 import requests
 import pandas as pd
@@ -124,3 +123,4 @@ if st.sidebar.button("🔍 위험도 예측하기"):
         ))
         fig.update_layout(showlegend=False, margin=dict(l=20, r=20, t=30, b=20))
         st.plotly_chart(fig, use_container_width=True)
+
