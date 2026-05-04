@@ -1,12 +1,14 @@
 
 import matplotlib.ticker
 import streamlit as st
+import matplotlib.font_manager as fm
 import requests
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib
 import folium
 from streamlit_folium import st_folium
+
 
 # 나눔고딕 경로 직접 지정
 import urllib.request
