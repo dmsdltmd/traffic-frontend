@@ -86,24 +86,34 @@ if st.sidebar.button("🔍 위험도 예측하기"):
         col2.success("🟢 비교적 안전한 지역입니다.")
 
     # ── 2. 인터랙티브 지도 (Folium 적용) ──
+    # ── 2. 지도 ──
     st.markdown("---")
     st.subheader("🗺️ 성남시 위험도 지도")
-    
-    m = folium.Map(location=[lat, lng], zoom_start=13)
+
+    import matplotlib
+    import matplotlib.font_manager as fm
+    fig_map, ax_map = plt.subplots(figsize=(8, 6))
+    ax_map.set_facecolor("#e8f4f8")
+    fig_map.patch.set_facecolor("#e8f4f8")
+
     for name, (code, d_lat, d_lng) in dong_options.items():
         if name == dong_name:
-            color = "red" if status == "위험" else "green"
-            folium.Marker(
-                [d_lat, d_lng], 
-                popup=f"{name}: {score}점",
-                icon=folium.Icon(color=color, icon="info-sign")
-            ).add_to(m)
+            c = "red" if status == "위험" else "green"
+            ax_map.scatter(d_lng, d_lat, s=300, color=c, zorder=5)
+            ax_map.annotate(f"{name}\n{score}점", (d_lng, d_lat),
+                          textcoords="offset points", xytext=(6, 6),
+                          fontsize=10, color=c, fontweight='bold')
         else:
-            folium.CircleMarker(
-                [d_lat, d_lng], radius=5, color="gray", fill=True, popup=name
-            ).add_to(m)
-            
-    st_folium(m, width=800, height=400)
+            ax_map.scatter(d_lng, d_lat, s=100, color="gray", alpha=0.5, zorder=3)
+            ax_map.annotate(name, (d_lng, d_lat),
+                          textcoords="offset points", xytext=(4, 4),
+                          fontsize=9, color="#555555")
+
+    import matplotlib.ticker
+    ax_map.xaxis.set_major_formatter(matplotlib.ticker.FormatStrFormatter('%.3f'))
+    ax_map.yaxis.set_major_formatter(matplotlib.ticker.FormatStrFormatter('%.3f'))
+    ax_map.set_title(f"Seongnam Risk Map - {dong_name}", fontsize=12)
+    ax_map.set_xlabel("L
 
     # ── 3. SHAP XAI 폭포수 그래프 (Plotly 적용 - 한글 깨짐 완벽 방지) ──
     if shap:
