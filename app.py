@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import streamlit as st
 import requests
 import pandas as pd
