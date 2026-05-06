@@ -107,7 +107,7 @@ if st.sidebar.button("🔍 위험도 예측하기"):
             folium.CircleMarker(
                 [d_lat, d_lng], radius=6, color="#bdc3c7", fill=True, fill_color="#bdc3c7", popup=name
             ).add_to(m)
-    st_folium(m, use_container_width=True, height=400)
+    st_folium(m, use_container_width=True, height=400, returned_objects=[])
 
     # ── 3. SHAP Waterfall ──
     if shap:
