@@ -37,6 +37,11 @@ dong_options = {
 
 target_options = ["어린이사고", "노인사고", "야간사고", "음주사고", "전체사고"]
 
+avg_data = {
+    '과속': 4, '중앙선 침범': 3, '신호위반': 15,
+    '안전거리 미확보': 5, '안전운전 의무 불이행': 30
+}
+
 st.set_page_config(page_title="성남시 교통사고 예측", layout="wide")
 st.title("🚦 성남시 교통사고 위험 예측 플랫폼")
 st.markdown("법정동과 법규 위반 수치를 입력하면 AI가 위험도를 예측합니다.")
@@ -56,6 +61,66 @@ safe_dist  = st.sidebar.number_input("안전거리 미확보",      min_value=0,
 duty       = st.sidebar.number_input("안전운전 의무 불이행", min_value=0, max_value=100, value=20)
 pedestrian = st.sidebar.number_input("보행자 보호의무 위반", min_value=0, max_value=50,  value=3)
 etc        = st.sidebar.number_input("기타",                 min_value=0, max_value=50,  value=1)
+
+# 정책 시뮬레이터용 current_data (버튼 누르기 전에도 항상 존재)
+current_data = {
+    '과속': speeding, '중앙선 침범': center, '신호위반': signal,
+    '안전거리 미확보': safe_dist, '안전운전 의무 불이행': duty
+}
+
+# ── 탭 구성 (버튼 누르기 전에도 탭은 항상 보임) ──
+tab1, tab2, tab3 = st.tabs(["🚦 실시간 위험도 분석", "📊 인공지능 판단 근거", "🔮 정책 시뮬레이터"])
+
+with tab3:
+    st.markdown("---")
+    st.markdown("### 🔮 교통안전 정책 시뮬레이터 (What-If Analysis)")
+    st.caption("※ 기준: 성남시 최근 3년 법정동 평균 위반 건수 (데이터 원본 기반)")
+
+    col1, col2 = st.columns([1, 1])
+
+    with col1:
+        st.subheader("📊 현재 입력값 vs 안전 기준선")
+        st.caption("빨간 영역이 파란 기준선을 벗어날수록 정책 개입이 필요한 수치입니다.")
+        fig_s = go.Figure()
+        fig_s.add_trace(go.Scatterpolar(
+            r=list(avg_data.values()), theta=list(avg_data.keys()), fill='toself',
+            name='성남시 안전 기준선(평균)', line_color='rgba(49, 130, 189, 0.7)'
+        ))
+        fig_s.add_trace(go.Scatterpolar(
+            r=list(current_data.values()), theta=list(current_data.keys()), fill='toself',
+            name='현재 시뮬레이션 수치', line_color='rgba(227, 74, 51, 0.9)'
+        ))
+        fig_s.update_layout(
+            polar=dict(radialaxis=dict(visible=True)),
+            showlegend=True, height=400,
+            margin=dict(l=20, r=20, t=20, b=20)
+        )
+        st.plotly_chart(fig_s, use_container_width=True)
+
+    with col2:
+        st.subheader("💡 정책 제안")
+        st.caption("현재 입력값 기준으로 평균을 초과한 항목입니다.")
+        exceeded = {k: v for k, v in current_data.items() if v > avg_data[k]}
+        if exceeded:
+            for item, val in exceeded.items():
+                avg = avg_data[item]
+                diff = val - avg
+                st.warning(
+                    f"⚠️ **{item}** : 현재 **{val}건** (평균 {avg}건 대비 **+{diff}건 초과**)\n\n"
+                    f"안전 기준선으로 돌아가려면 **최소 {diff}건의 추가 단속**이 필요합니다. "
+                    f"집중 단속 및 주민 대상 교통안전 캠페인 시행을 권고합니다."
+                )
+            st.error(
+                "🚨 **즉각적인 행정 조치가 필요합니다!**\n\n"
+                "위 항목들은 성남시 평균을 초과한 위험 요인입니다. "
+                "한정된 예산을 해당 항목의 단속에 집중 투입하면 가장 효과적으로 위험도를 낮출 수 있습니다."
+            )
+        else:
+            st.success(
+                "✅ **모든 항목이 성남시 평균 이하입니다.**\n\n"
+                "현재 입력된 수치는 안전 기준선 범위 내에 있습니다. "
+                "지속적인 모니터링을 통해 현재의 안전 수준을 유지하시기 바랍니다."
+            )
 
 if st.sidebar.button("🔍 위험도 예측하기"):
     payload = {
@@ -91,10 +156,6 @@ if st.sidebar.button("🔍 위험도 예측하기"):
             else:
                 st.success("✅ **안전 수준** : 비교적 안전하게 관리되고 있는 지역입니다.")
 
-    # ── 탭 3개 ──
-    tab1, tab2, tab3 = st.tabs(["🚦 실시간 위험도 분석", "📊 인공지능 판단 근거", "🔮 정책 시뮬레이터"])
-
-    # ── 탭1: 지도 + SHAP ──
     with tab1:
         st.markdown("---")
         st.subheader("🗺️ 성남시 위험도 지도")
@@ -143,7 +204,6 @@ if st.sidebar.button("🔍 위험도 예측하기"):
             fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
             st.plotly_chart(fig, use_container_width=True)
 
-    # ── 탭2: 방사형 차트 + 변수 중요도 ──
     with tab2:
         st.markdown("---")
         col1, col2 = st.columns(2)
@@ -174,79 +234,27 @@ if st.sidebar.button("🔍 위험도 예측하기"):
             st.plotly_chart(fig_r, use_container_width=True)
 
         with col2:
-            st.subheader("💡 정책 제안")
-            st.caption("현재 입력값 기준으로 평균을 초과한 항목입니다.")
+            st.subheader("📈 AI 핵심 판단 요인")
+            st.caption("AI가 위험도를 계산할 때 가장 중요하게 본 변수입니다.")
+            if shap:
+                shap_df = pd.DataFrame({
+                    "항목": list(shap.keys()),
+                    "중요도": [abs(v) for v in shap.values()]
+                }).sort_values("중요도", ascending=True)
 
-            exceeded = {k: v for k, v in current_data.items() if v > avg_data[k]}
-            if exceeded:
-                for item, val in exceeded.items():
-                    avg = avg_data[item]
-                    diff = val - avg
-                    need = diff
-                    st.warning(
-                        f"⚠️ **{item}** : 현재 **{val}건** (평균 {avg}건 대비 **+{diff}건 초과**)\n\n"
-                        f"안전 기준선으로 돌아가려면 **최소 {need}건의 추가 단속**이 필요합니다. "
-                        f"집중 단속 및 주민 대상 교통안전 캠페인 시행을 권고합니다."
-                    )
-                st.error(
-                    "🚨 **즉각적인 행정 조치가 필요합니다!**\n\n"
-                    "위 항목들은 성남시 평균을 초과한 위험 요인입니다. "
-                    "한정된 예산을 해당 항목의 단속에 집중 투입하면 가장 효과적으로 위험도를 낮출 수 있습니다."
+                fig_i = go.Figure(go.Bar(
+                    x=shap_df["중요도"],
+                    y=shap_df["항목"],
+                    orientation='h',
+                    marker_color='teal'
+                ))
+                fig_i.update_layout(
+                    title="AI 핵심 판단 요인",
+                    height=400,
+                    margin=dict(l=20, r=20, t=50, b=20),
+                    plot_bgcolor="rgba(0,0,0,0)"
                 )
+                fig_i.update_xaxes(showgrid=True, gridcolor='LightGray')
+                st.plotly_chart(fig_i, use_container_width=True)
             else:
-                st.success(
-                    "✅ **모든 항목이 성남시 평균 이하입니다.**\n\n"
-                    "현재 입력된 수치는 안전 기준선 범위 내에 있습니다. "
-                    "지속적인 모니터링을 통해 현재의 안전 수준을 유지하시기 바랍니다."
-                )
-
-    # ── 탭3: 정책 시뮬레이터 ──
-    with tab3:
-        st.markdown("---")
-        st.markdown("### 🔮 교통안전 정책 시뮬레이터 (What-If Analysis)")
-        st.caption("※ 기준: 성남시 최근 3년 법정동 평균 위반 건수 (데이터 원본 기반)")
-
-        avg_data = {
-            '과속': 4, '중앙선 침범': 3, '신호위반': 15,
-            '안전거리 미확보': 5, '안전운전 의무 불이행': 30
-        }
-        current_data = {
-            '과속': speeding, '중앙선 침범': center, '신호위반': signal,
-            '안전거리 미확보': safe_dist, '안전운전 의무 불이행': duty
-        }
-
-        col1, col2 = st.columns([1, 1])
-
-        with col1:
-            st.subheader("📊 현재 입력값 vs 안전 기준선")
-            st.caption("빨간 영역이 파란 기준선을 벗어날수록 정책 개입이 필요한 수치입니다.")
-            fig_s = go.Figure()
-            fig_s.add_trace(go.Scatterpolar(
-                r=list(avg_data.values()), theta=list(avg_data.keys()), fill='toself',
-                name='성남시 안전 기준선(평균)', line_color='rgba(49, 130, 189, 0.7)'
-            ))
-            fig_s.add_trace(go.Scatterpolar(
-                r=list(current_data.values()), theta=list(current_data.keys()), fill='toself',
-                name='현재 시뮬레이션 수치', line_color='rgba(227, 74, 51, 0.9)'
-            ))
-            fig_s.update_layout(
-                polar=dict(radialaxis=dict(visible=True)),
-                showlegend=True,
-                height=400,
-                margin=dict(l=20, r=20, t=20, b=20)
-            )
-            st.plotly_chart(fig_s, use_container_width=True)
-
-        with col2:
-            st.subheader("💡 정책 제안")
-            st.caption("현재 입력값 기준으로 평균을 초과한 항목입니다.")
-
-            exceeded = {k: v for k, v in current_data.items() if v > avg_data[k]}
-            if exceeded:
-                for item, val in exceeded.items():
-                    avg = avg_data[item]
-                    diff = val - avg
-                    st.warning(f"⚠️ **{item}**: 현재 {val}건 (평균 {avg}건 대비 **+{diff}건 초과**)")
-                st.error("🚨 위 항목에 대한 집중 단속 및 캠페인이 필요합니다!")
-            else:
-                st.success("✅ 모든 항목이 성남시 평균 이하입니다. 현재 안전 기준을 잘 유지하고 있습니다!")
+                st.info("예측 후 변수 중요도가 표시됩니다.")
