@@ -76,56 +76,62 @@ if st.sidebar.button("🔍 위험도 예측하기"):
     status = result.get("상태", "")
     shap   = result.get("SHAP_분석", {})
 
-    # ── 예측 결과 ──
+    # ── 1. 예측 결과 ──
     st.markdown("---")
     st.subheader(f"📊 {dong_name} 예측 결과")
-    col1, col2 = st.columns(2)
-    col1.metric("예측 위험지수", f"{score} 점")
-    if status == "위험":
-        col2.error("🔴 단속 및 관리가 필요한 위험 지역입니다.")
-    else:
-        col2.success("🟢 비교적 안전한 지역입니다.")
+    with st.container(border=True):
+        col1, col2 = st.columns([1, 2])
+        with col1:
+            st.metric(label="예측 위험지수", value=f"{score} 점")
+        with col2:
+            st.write("")
+            if status == "위험":
+                st.error("🚨 **위험 수준** : 단속 및 집중 관리가 필요한 지역입니다.")
+            else:
+                st.success("✅ **안전 수준** : 비교적 안전하게 관리되고 있는 지역입니다.")
 
-    # ── 지도 ──
+    # ── 2. 지도 ──
     st.markdown("---")
     st.subheader("🗺️ 성남시 위험도 지도")
-    fig_map, ax_map = plt.subplots(figsize=(8, 6))
-    ax_map.set_facecolor("#e8f4f8")
-    fig_map.patch.set_facecolor("#e8f4f8")
+    st.caption("지도를 확대/축소하거나 마커를 클릭해 보세요.")
+    m = folium.Map(location=[lat, lng], zoom_start=13, tiles="CartoDB positron")
     for name, (code, d_lat, d_lng) in dong_options.items():
         if name == dong_name:
-            c = "red" if status == "위험" else "green"
-            ax_map.scatter(d_lng, d_lat, s=300, color=c, zorder=5)
-            ax_map.annotate(f"{name}\n{score}점", (d_lng, d_lat),
-                            textcoords="offset points", xytext=(6, 6),
-                            fontsize=10, color=c, fontweight='bold')
+            color = "red" if status == "위험" else "green"
+            folium.Marker(
+                [d_lat, d_lng],
+                popup=f"<b>{name}</b><br>위험지수: {score}점",
+                icon=folium.Icon(color=color, icon="info-sign")
+            ).add_to(m)
         else:
-            ax_map.scatter(d_lng, d_lat, s=100, color="gray", alpha=0.5, zorder=3)
-            ax_map.annotate(name, (d_lng, d_lat),
-                            textcoords="offset points", xytext=(4, 4),
-                            fontsize=9, color="#555555")
-    ax_map.xaxis.set_major_formatter(matplotlib.ticker.FormatStrFormatter('%.3f'))
-    ax_map.yaxis.set_major_formatter(matplotlib.ticker.FormatStrFormatter('%.3f'))
-    ax_map.set_title(f"성남시 법정동 위험도 지도 - {dong_name} 선택됨", fontsize=12)
-    ax_map.set_xlabel("경도")
-    ax_map.set_ylabel("위도")
-    plt.tight_layout()
-    st.pyplot(fig_map)
+            folium.CircleMarker(
+                [d_lat, d_lng], radius=6, color="#bdc3c7", fill=True, fill_color="#bdc3c7", popup=name
+            ).add_to(m)
+    st_folium(m, use_container_width=True, height=400)
 
-    # ── SHAP Waterfall (Plotly - 한글 완벽 지원) ──
+    # ── 3. SHAP Waterfall ──
     if shap:
         st.markdown("---")
         st.subheader("🔍 위험도 원인 분석 (SHAP Waterfall)")
-        st.caption("각 법규 위반 항목이 위험도 점수에 얼마나 기여했는지 보여줍니다.")
+        st.caption("해당 지역의 위험도를 높인 요인(빨간색)과 낮춘 요인(초록색)을 분석합니다.")
         fig = go.Figure(go.Waterfall(
+            name="위험도 분석",
             orientation="v",
             measure=["relative"] * len(shap),
             x=list(shap.keys()),
             textposition="outside",
             text=[f"{v:+.1f}" for v in shap.values()],
             y=list(shap.values()),
-            connector={"line": {"color": "rgb(63, 63, 63)"}}
+            connector={"line": {"color": "rgb(63, 63, 63)"}},
+            decreasing={"marker": {"color": "#2ecc71"}},
+            increasing={"marker": {"color": "#e74c3c"}},
+            totals={"marker": {"color": "#34495e"}}
         ))
-        fig.update_layout(showlegend=False, margin=dict(l=20, r=20, t=30, b=20))
+        fig.update_layout(
+            showlegend=False,
+            height=450,
+            margin=dict(l=20, r=20, t=30, b=20),
+            plot_bgcolor="rgba(0,0,0,0)",
+        )
+        fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
         st.plotly_chart(fig, use_container_width=True)
-
