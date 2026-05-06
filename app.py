@@ -37,48 +37,6 @@ dong_options = {
 
 target_options = ["어린이사고", "노인사고", "야간사고", "음주사고", "전체사고"]
 
-avg_data = {
-    '과속': 4, '중앙선 침범': 3, '신호위반': 15,
-    '안전거리 미확보': 5, '안전운전 의무 불이행': 30
-}import streamlit as st
-import requests
-import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.font_manager as fm
-import matplotlib.ticker
-import numpy as np
-import folium
-from streamlit_folium import st_folium
-import plotly.graph_objects as go
-
-# 나눔고딕 폰트 적용
-font_path = '/usr/share/fonts/truetype/nanum/NanumGothic.ttf'
-try:
-    fm.fontManager.addfont(font_path)
-    plt.rcParams['font.family'] = fm.FontProperties(fname=font_path).get_name()
-except:
-    pass
-plt.rcParams['axes.unicode_minus'] = False
-
-API_URL = "https://seongnam-api.onrender.com/predict"
-
-dong_options = {
-    "수진1동": ("4113110100", 37.4386, 127.1378),
-    "수진2동": ("4113110200", 37.4361, 127.1401),
-    "신흥1동": ("4113110300", 37.4412, 127.1356),
-    "신흥2동": ("4113110400", 37.4438, 127.1334),
-    "신흥3동": ("4113110500", 37.4459, 127.1312),
-    "단대동":  ("4113110600", 37.4502, 127.1289),
-    "은행동":  ("4113110700", 37.4478, 127.1423),
-    "양지동":  ("4113110800", 37.4334, 127.1445),
-    "태평1동": ("4113110900", 37.4298, 127.1356),
-    "태평2동": ("4113111000", 37.4312, 127.1312),
-    "태평3동": ("4113111100", 37.4289, 127.1289),
-    "태평4동": ("4113111200", 37.4267, 127.1267),
-}
-
-target_options = ["어린이사고", "노인사고", "야간사고", "음주사고", "전체사고"]
-
 st.set_page_config(page_title="성남시 교통사고 예측", layout="wide")
 st.title("🚦 성남시 교통사고 위험 예측 플랫폼")
 st.markdown("법정동과 법규 위반 수치를 입력하면 AI가 위험도를 예측합니다.")
