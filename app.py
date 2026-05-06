@@ -94,7 +94,7 @@ if st.sidebar.button("🔍 위험도 예측하기"):
     st.markdown("---")
     st.subheader("🗺️ 성남시 위험도 지도")
     st.caption("지도를 확대/축소하거나 마커를 클릭해 보세요.")
-    m = folium.Map(location=[lat, lng], zoom_start=13, tiles="CartoDB positron")
+    m = folium.Map(location=[lat, lng], zoom_start=13, tiles="https://mt1.google.com/vt/lyrs=r&x={x}&y={y}&z={z}&hl=ko", attr="Google Maps")
     for name, (code, d_lat, d_lng) in dong_options.items():
         if name == dong_name:
             color = "red" if status == "위험" else "green"
