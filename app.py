@@ -174,30 +174,31 @@ if st.sidebar.button("🔍 위험도 예측하기"):
             st.plotly_chart(fig_r, use_container_width=True)
 
         with col2:
-            st.subheader("📈 AI 핵심 판단 요인")
-            st.caption("AI가 위험도를 계산할 때 가장 중요하게 본 변수입니다.")
-            if shap:
-                shap_df = pd.DataFrame({
-                    "항목": list(shap.keys()),
-                    "중요도": [abs(v) for v in shap.values()]
-                }).sort_values("중요도", ascending=True)
+            st.subheader("💡 정책 제안")
+            st.caption("현재 입력값 기준으로 평균을 초과한 항목입니다.")
 
-                fig_i = go.Figure(go.Bar(
-                    x=shap_df["중요도"],
-                    y=shap_df["항목"],
-                    orientation='h',
-                    marker_color='teal'
-                ))
-                fig_i.update_layout(
-                    title="AI 핵심 판단 요인",
-                    height=400,
-                    margin=dict(l=20, r=20, t=50, b=20),
-                    plot_bgcolor="rgba(0,0,0,0)"
+            exceeded = {k: v for k, v in current_data.items() if v > avg_data[k]}
+            if exceeded:
+                for item, val in exceeded.items():
+                    avg = avg_data[item]
+                    diff = val - avg
+                    need = diff
+                    st.warning(
+                        f"⚠️ **{item}** : 현재 **{val}건** (평균 {avg}건 대비 **+{diff}건 초과**)\n\n"
+                        f"안전 기준선으로 돌아가려면 **최소 {need}건의 추가 단속**이 필요합니다. "
+                        f"집중 단속 및 주민 대상 교통안전 캠페인 시행을 권고합니다."
+                    )
+                st.error(
+                    "🚨 **즉각적인 행정 조치가 필요합니다!**\n\n"
+                    "위 항목들은 성남시 평균을 초과한 위험 요인입니다. "
+                    "한정된 예산을 해당 항목의 단속에 집중 투입하면 가장 효과적으로 위험도를 낮출 수 있습니다."
                 )
-                fig_i.update_xaxes(showgrid=True, gridcolor='LightGray')
-                st.plotly_chart(fig_i, use_container_width=True)
             else:
-                st.info("예측 후 변수 중요도가 표시됩니다.")
+                st.success(
+                    "✅ **모든 항목이 성남시 평균 이하입니다.**\n\n"
+                    "현재 입력된 수치는 안전 기준선 범위 내에 있습니다. "
+                    "지속적인 모니터링을 통해 현재의 안전 수준을 유지하시기 바랍니다."
+                )
 
     # ── 탭3: 정책 시뮬레이터 ──
     with tab3:
