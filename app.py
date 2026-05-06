@@ -62,15 +62,137 @@ duty       = st.sidebar.number_input("안전운전 의무 불이행", min_value=
 pedestrian = st.sidebar.number_input("보행자 보호의무 위반", min_value=0, max_value=50,  value=3)
 etc        = st.sidebar.number_input("기타",                 min_value=0, max_value=50,  value=1)
 
-# 정책 시뮬레이터용 current_data (버튼 누르기 전에도 항상 존재)
 current_data = {
     '과속': speeding, '중앙선 침범': center, '신호위반': signal,
     '안전거리 미확보': safe_dist, '안전운전 의무 불이행': duty
 }
 
-# ── 탭 구성 (버튼 누르기 전에도 탭은 항상 보임) ──
+# ── 탭 구성 ──
 tab1, tab2, tab3 = st.tabs(["🚦 실시간 위험도 분석", "📊 인공지능 판단 근거", "🔮 정책 시뮬레이터"])
 
+# ── 탭1 ──
+with tab1:
+    if st.sidebar.button("🔍 위험도 예측하기"):
+        payload = {
+            "year": year, "dong": dong_code, "target_name": target,
+            "speeding": float(speeding), "center_line": float(center),
+            "signal": float(signal), "safe_dist": float(safe_dist),
+            "duty": float(duty), "pedestrian": float(pedestrian), "etc": float(etc)
+        }
+
+        with st.spinner("AI 분석 중... (최초 실행 시 1분 정도 소요될 수 있습니다)"):
+            try:
+                res = requests.post(API_URL, json=payload, timeout=120)
+                result = res.json()
+            except Exception as e:
+                st.error(f"서버 연결 오류: {e}")
+                st.stop()
+
+        score  = result.get("위험지수_결과", 0)
+        status = result.get("상태", "")
+        shap   = result.get("SHAP_분석", {})
+
+        # 예측 결과 카드
+        st.markdown("---")
+        st.subheader(f"📊 {dong_name} 예측 결과")
+        with st.container(border=True):
+            col1, col2 = st.columns([1, 2])
+            with col1:
+                st.metric(label="예측 위험지수", value=f"{score} 점")
+            with col2:
+                st.write("")
+                if status == "위험":
+                    st.error("🚨 **위험 수준** : 단속 및 집중 관리가 필요한 지역입니다.")
+                else:
+                    st.success("✅ **안전 수준** : 비교적 안전하게 관리되고 있는 지역입니다.")
+
+        # 지도
+        st.markdown("---")
+        st.subheader("🗺️ 성남시 위험도 지도")
+        st.caption("지도를 확대/축소하거나 마커를 클릭해 보세요.")
+        m = folium.Map(
+            location=[lat, lng], zoom_start=13,
+            tiles="https://mt1.google.com/vt/lyrs=r&x={x}&y={y}&z={z}&hl=ko",
+            attr="Google Maps"
+        )
+        for name, (code, d_lat, d_lng) in dong_options.items():
+            if name == dong_name:
+                color = "red" if status == "위험" else "green"
+                folium.Marker(
+                    [d_lat, d_lng],
+                    popup=f"<b>{name}</b><br>위험지수: {score}점",
+                    icon=folium.Icon(color=color, icon="info-sign")
+                ).add_to(m)
+            else:
+                folium.CircleMarker(
+                    [d_lat, d_lng], radius=6, color="#bdc3c7",
+                    fill=True, fill_color="#bdc3c7", popup=name
+                ).add_to(m)
+        st_folium(m, use_container_width=True, height=400, returned_objects=[])
+
+        # SHAP Waterfall
+        if shap:
+            st.markdown("---")
+            st.subheader("🔍 위험도 원인 분석 (SHAP Waterfall)")
+            st.caption("해당 지역의 위험도를 높인 요인(빨간색)과 낮춘 요인(초록색)을 분석합니다.")
+            fig = go.Figure(go.Waterfall(
+                name="위험도 분석", orientation="v",
+                measure=["relative"] * len(shap),
+                x=list(shap.keys()),
+                textposition="outside",
+                text=[f"{v:+.1f}" for v in shap.values()],
+                y=list(shap.values()),
+                connector={"line": {"color": "rgb(63, 63, 63)"}},
+                decreasing={"marker": {"color": "#2ecc71"}},
+                increasing={"marker": {"color": "#e74c3c"}},
+                totals={"marker": {"color": "#34495e"}}
+            ))
+            fig.update_layout(
+                showlegend=False, height=450,
+                margin=dict(l=20, r=20, t=30, b=20),
+                plot_bgcolor="rgba(0,0,0,0)",
+            )
+            fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
+            st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info("👈 왼쪽 사이드바에서 조건을 입력하고 예측 버튼을 눌러주세요!")
+
+# ── 탭2 ──
+with tab2:
+    st.markdown("---")
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.subheader("🕸️ 입력값 vs 성남시 평균 비교")
+        st.caption("빨간 영역이 파란 영역을 크게 벗어날수록 위험한 수치입니다.")
+        categories  = ['과속', '중앙선 침범', '신호위반', '안전거리 미확보', '안전운전 의무 불이행']
+        avg_values  = [4.1, 2.5, 15.2, 5.0, 30.1]
+        user_values = [speeding, center, signal, safe_dist, duty]
+
+        fig_r = go.Figure()
+        fig_r.add_trace(go.Scatterpolar(
+            r=avg_values, theta=categories, fill='toself',
+            name='성남시 평균', line_color='rgba(49, 130, 189, 0.7)'
+        ))
+        fig_r.add_trace(go.Scatterpolar(
+            r=user_values, theta=categories, fill='toself',
+            name='현재 입력값', line_color='rgba(227, 74, 51, 0.9)'
+        ))
+        fig_r.update_layout(
+            polar=dict(radialaxis=dict(visible=True, range=[0, max(user_values + avg_values) + 10])),
+            showlegend=True,
+            title="성남시 평균 vs 현재 입력값 비교",
+            height=400,
+            margin=dict(l=20, r=20, t=50, b=20)
+        )
+        st.plotly_chart(fig_r, use_container_width=True)
+
+    with col2:
+        st.subheader("📈 AI 핵심 판단 요인")
+        st.caption("AI가 위험도를 계산할 때 가장 중요하게 본 변수입니다.")
+        st.info("👈 예측 버튼을 누른 후 확인하세요.")
+
+# ── 탭3 ──
 with tab3:
     st.markdown("---")
     st.markdown("### 🔮 교통안전 정책 시뮬레이터 (What-If Analysis)")
@@ -121,140 +243,3 @@ with tab3:
                 "현재 입력된 수치는 안전 기준선 범위 내에 있습니다. "
                 "지속적인 모니터링을 통해 현재의 안전 수준을 유지하시기 바랍니다."
             )
-
-if st.sidebar.button("🔍 위험도 예측하기"):
-    payload = {
-        "year": year, "dong": dong_code, "target_name": target,
-        "speeding": float(speeding), "center_line": float(center),
-        "signal": float(signal), "safe_dist": float(safe_dist),
-        "duty": float(duty), "pedestrian": float(pedestrian), "etc": float(etc)
-    }
-
-    with st.spinner("AI 분석 중... (최초 실행 시 1분 정도 소요될 수 있습니다)"):
-        try:
-            res = requests.post(API_URL, json=payload, timeout=120)
-            result = res.json()
-        except Exception as e:
-            st.error(f"서버 연결 오류: {e}")
-            st.stop()
-
-    score  = result.get("위험지수_결과", 0)
-    status = result.get("상태", "")
-    shap   = result.get("SHAP_분석", {})
-
-    # ── 예측 결과 카드 ──
-    st.markdown("---")
-    st.subheader(f"📊 {dong_name} 예측 결과")
-    with st.container(border=True):
-        col1, col2 = st.columns([1, 2])
-        with col1:
-            st.metric(label="예측 위험지수", value=f"{score} 점")
-        with col2:
-            st.write("")
-            if status == "위험":
-                st.error("🚨 **위험 수준** : 단속 및 집중 관리가 필요한 지역입니다.")
-            else:
-                st.success("✅ **안전 수준** : 비교적 안전하게 관리되고 있는 지역입니다.")
-
-    with tab1:
-        st.markdown("---")
-        st.subheader("🗺️ 성남시 위험도 지도")
-        st.caption("지도를 확대/축소하거나 마커를 클릭해 보세요.")
-        m = folium.Map(
-            location=[lat, lng], zoom_start=13,
-            tiles="https://mt1.google.com/vt/lyrs=r&x={x}&y={y}&z={z}&hl=ko",
-            attr="Google Maps"
-        )
-        for name, (code, d_lat, d_lng) in dong_options.items():
-            if name == dong_name:
-                color = "red" if status == "위험" else "green"
-                folium.Marker(
-                    [d_lat, d_lng],
-                    popup=f"<b>{name}</b><br>위험지수: {score}점",
-                    icon=folium.Icon(color=color, icon="info-sign")
-                ).add_to(m)
-            else:
-                folium.CircleMarker(
-                    [d_lat, d_lng], radius=6, color="#bdc3c7",
-                    fill=True, fill_color="#bdc3c7", popup=name
-                ).add_to(m)
-        st_folium(m, use_container_width=True, height=400, returned_objects=[])
-
-        if shap:
-            st.markdown("---")
-            st.subheader("🔍 위험도 원인 분석 (SHAP Waterfall)")
-            st.caption("해당 지역의 위험도를 높인 요인(빨간색)과 낮춘 요인(초록색)을 분석합니다.")
-            fig = go.Figure(go.Waterfall(
-                name="위험도 분석", orientation="v",
-                measure=["relative"] * len(shap),
-                x=list(shap.keys()),
-                textposition="outside",
-                text=[f"{v:+.1f}" for v in shap.values()],
-                y=list(shap.values()),
-                connector={"line": {"color": "rgb(63, 63, 63)"}},
-                decreasing={"marker": {"color": "#2ecc71"}},
-                increasing={"marker": {"color": "#e74c3c"}},
-                totals={"marker": {"color": "#34495e"}}
-            ))
-            fig.update_layout(
-                showlegend=False, height=450,
-                margin=dict(l=20, r=20, t=30, b=20),
-                plot_bgcolor="rgba(0,0,0,0)",
-            )
-            fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
-            st.plotly_chart(fig, use_container_width=True)
-
-    with tab2:
-        st.markdown("---")
-        col1, col2 = st.columns(2)
-
-        with col1:
-            st.subheader("🕸️ 입력값 vs 성남시 평균 비교")
-            st.caption("빨간 영역이 파란 영역을 크게 벗어날수록 위험한 수치입니다.")
-            categories  = ['과속', '중앙선 침범', '신호위반', '안전거리 미확보', '안전운전 의무 불이행']
-            avg_values  = [4.1, 2.5, 15.2, 5.0, 30.1]
-            user_values = [speeding, center, signal, safe_dist, duty]
-
-            fig_r = go.Figure()
-            fig_r.add_trace(go.Scatterpolar(
-                r=avg_values, theta=categories, fill='toself',
-                name='성남시 평균', line_color='rgba(49, 130, 189, 0.7)'
-            ))
-            fig_r.add_trace(go.Scatterpolar(
-                r=user_values, theta=categories, fill='toself',
-                name='현재 입력값', line_color='rgba(227, 74, 51, 0.9)'
-            ))
-            fig_r.update_layout(
-                polar=dict(radialaxis=dict(visible=True, range=[0, max(user_values + avg_values) + 10])),
-                showlegend=True,
-                title="성남시 평균 vs 현재 입력값 비교",
-                height=400,
-                margin=dict(l=20, r=20, t=50, b=20)
-            )
-            st.plotly_chart(fig_r, use_container_width=True)
-
-        with col2:
-            st.subheader("📈 AI 핵심 판단 요인")
-            st.caption("AI가 위험도를 계산할 때 가장 중요하게 본 변수입니다.")
-            if shap:
-                shap_df = pd.DataFrame({
-                    "항목": list(shap.keys()),
-                    "중요도": [abs(v) for v in shap.values()]
-                }).sort_values("중요도", ascending=True)
-
-                fig_i = go.Figure(go.Bar(
-                    x=shap_df["중요도"],
-                    y=shap_df["항목"],
-                    orientation='h',
-                    marker_color='teal'
-                ))
-                fig_i.update_layout(
-                    title="AI 핵심 판단 요인",
-                    height=400,
-                    margin=dict(l=20, r=20, t=50, b=20),
-                    plot_bgcolor="rgba(0,0,0,0)"
-                )
-                fig_i.update_xaxes(showgrid=True, gridcolor='LightGray')
-                st.plotly_chart(fig_i, use_container_width=True)
-            else:
-                st.info("예측 후 변수 중요도가 표시됩니다.")
