@@ -156,7 +156,7 @@ if st.sidebar.button("🔍 위험도 예측하기"):
             fig_r = go.Figure()
             fig_r.add_trace(go.Scatterpolar(
                 r=avg_values, theta=categories, fill='toself',
-                name='성남시 평균', line_color='rgba(49, 130, 189, 0.7)'
+                name='기준값', line_color='rgba(49, 130, 189, 0.7)'
             ))
             fig_r.add_trace(go.Scatterpolar(
                 r=user_values, theta=categories, fill='toself',
@@ -165,7 +165,7 @@ if st.sidebar.button("🔍 위험도 예측하기"):
             fig_r.update_layout(
                 polar=dict(radialaxis=dict(visible=True, range=[0, max(user_values + avg_values) + 10])),
                 showlegend=True,
-                title="성남시 평균 vs 현재 입력값 비교",
+                title="기준값 vs 현재 입력값 비교",
                 height=400,
                 margin=dict(l=20, r=20, t=50, b=20)
             )
@@ -201,7 +201,7 @@ if st.sidebar.button("🔍 위험도 예측하기"):
     with tab3:
         st.markdown("---")
         st.markdown("### 🔮 교통안전 정책 시뮬레이터 (What-If Analysis)")
-        st.caption("※ 기준: 성남시 최근 3년 법정동 평균 위반 건수 (데이터 원본 기반)")
+        st.caption("※ 기준: 사전 산출된 기준값 기반")
 
         avg_data = {
             '과속': 4, '중앙선 침범': 3, '신호위반': 15,
@@ -220,7 +220,7 @@ if st.sidebar.button("🔍 위험도 예측하기"):
             fig_s = go.Figure()
             fig_s.add_trace(go.Scatterpolar(
                 r=list(avg_data.values()), theta=list(avg_data.keys()), fill='toself',
-                name='성남시 안전 기준선(평균)', line_color='rgba(49, 130, 189, 0.7)'
+                name='안전 기준선', line_color='rgba(49, 130, 189, 0.7)'
             ))
             fig_s.add_trace(go.Scatterpolar(
                 r=list(current_data.values()), theta=list(current_data.keys()), fill='toself',
