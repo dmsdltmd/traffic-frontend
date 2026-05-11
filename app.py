@@ -147,7 +147,7 @@ if st.sidebar.button("🔍 위험도 예측하기"):
         col1, col2 = st.columns(2)
 
         with col1:
-            st.subheader("🕸️ 입력값 vs 성남시 평균 비교")
+            st.subheader("🕸️ 입력값 vs 기준값 비교")
             st.caption("빨간 영역이 파란 영역을 크게 벗어날수록 위험한 수치입니다.")
             categories  = ['과속', '중앙선 침범', '신호위반', '안전거리 미확보', '안전운전 의무 불이행']
             avg_values  = [4.1, 2.5, 15.2, 5.0, 30.1]
