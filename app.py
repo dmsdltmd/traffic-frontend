@@ -75,7 +75,7 @@ if st.sidebar.button("🔍 위험도 예측하기"):
     status = result.get("상태", "")
     shap   = result.get("SHAP_분석", {})
 
-    # ── 예측 결과 카드 ──
+   # ── 예측 결과 카드 ──
     st.markdown("---")
     st.subheader(f"📊 {dong_name} 예측 결과")
     with st.container(border=True):
@@ -84,11 +84,21 @@ if st.sidebar.button("🔍 위험도 예측하기"):
             st.metric(label="예측 위험지수", value=f"{score} 점")
         with col2:
             st.write("")
-            if status == "위험":
+            avg_check = {
+                '과속': 4, '중앙선 침범': 3, '신호위반': 15,
+                '안전거리 미확보': 5, '안전운전 의무 불이행': 30
+            }
+            current_check = {
+                '과속': speeding, '중앙선 침범': center, '신호위반': signal,
+                '안전거리 미확보': safe_dist, '안전운전 의무 불이행': duty
+            }
+            is_danger = any(current_check[k] > avg_check[k] for k in avg_check)
+
+            if is_danger:
                 st.error("🚨 **위험 수준** : 단속 및 집중 관리가 필요한 지역입니다.")
             else:
                 st.success("✅ **안전 수준** : 비교적 안전하게 관리되고 있는 지역입니다.")
-
+                
     # ── 탭 3개 ──
     tab1, tab2, tab3 = st.tabs(["🚦 실시간 위험도 분석", "📊 인공지능 판단 근거", "🔮 정책 시뮬레이터"])
 
