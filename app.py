@@ -138,9 +138,9 @@ if st.sidebar.button("🔍 위험도 예측하기"):
                 textposition="outside",
                 text=[f"{v:+.1f}" for v in shap.values()],
                 y=list(shap.values()),
-                connector={"line": {"color": "rgba(0,0,0,0)"}},  
-                increasing={"marker": {"color": "#ef4444"}},      
-                decreasing={"marker": {"color": "#11CAA0"}},      
+                connector={"line": {"color": "rgba(0,0,0,0)"}},
+                increasing={"marker": {"color": "#ef4444"}},
+                decreasing={"marker": {"color": "#11CAA0"}},     
                 totals={"marker": {"color": "#34495e"}}
             ))
             fig.update_layout(
