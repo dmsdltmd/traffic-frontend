@@ -184,14 +184,14 @@ if st.sidebar.button("🔍 위험도 예측하기"):
             st.subheader("🕸️ 입력값 vs 기준값 비교")
             st.caption("빨간 영역이 파란 영역을 크게 벗어날수록 위험한 수치입니다.")
             categories  = ['과속', '중앙선 침범', '신호위반', '안전거리 미확보', '안전운전 의무 불이행']
-            # 🟢 current_base로 동기화
             avg_values  = [current_base['과속'], current_base['중앙선 침범'], current_base['신호위반'], current_base['안전거리'], current_base['안전운전']]
             user_values = [speeding, center, signal, safe_dist, duty]
 
             fig_r = go.Figure()
             fig_r.add_trace(go.Scatterpolar(
                 r=avg_values, theta=categories, fill='toself',
-                name='기준값', line_color='rgba(49, 130, 189, 0.7)'
+                name='기준값', line_color='rgba(0, 90, 255, 1.0)',
+                fillcolor='rgba(0, 90, 255, 0.2)'
             ))
             fig_r.add_trace(go.Scatterpolar(
                 r=user_values, theta=categories, fill='toself',
@@ -238,7 +238,6 @@ if st.sidebar.button("🔍 위험도 예측하기"):
         st.markdown("### 🔮 교통안전 정책 시뮬레이터 (What-If Analysis)")
         st.caption("※ 기준: 사전 산출된 기준값 기반")
 
-        # 🟢 current_base로 동기화
         avg_data = {
             '과속': current_base['과속'],
             '중앙선 침범': current_base['중앙선 침범'],
@@ -259,7 +258,8 @@ if st.sidebar.button("🔍 위험도 예측하기"):
             fig_s = go.Figure()
             fig_s.add_trace(go.Scatterpolar(
                 r=list(avg_data.values()), theta=list(avg_data.keys()), fill='toself',
-                name='안전 기준선', line_color='rgba(49, 130, 189, 0.7)'
+                name='안전 기준선', line_color='rgba(0, 90, 255, 1.0)',
+                fillcolor='rgba(0, 90, 255, 0.2)'
             ))
             fig_s.add_trace(go.Scatterpolar(
                 r=list(current_data.values()), theta=list(current_data.keys()), fill='toself',
