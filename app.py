@@ -190,8 +190,7 @@ if st.sidebar.button("🔍 위험도 예측하기"):
             fig_r = go.Figure()
             fig_r.add_trace(go.Scatterpolar(
                 r=avg_values, theta=categories, fill='toself',
-                name='기준값', line_color='rgba(0, 90, 255, 1.0)',
-                fillcolor='rgba(0, 90, 255, 0.2)'
+                name='기준값', line_color='rgba(49, 130, 189, 0.7)'
             ))
             fig_r.add_trace(go.Scatterpolar(
                 r=user_values, theta=categories, fill='toself',
@@ -258,8 +257,7 @@ if st.sidebar.button("🔍 위험도 예측하기"):
             fig_s = go.Figure()
             fig_s.add_trace(go.Scatterpolar(
                 r=list(avg_data.values()), theta=list(avg_data.keys()), fill='toself',
-                name='안전 기준선', line_color='rgba(0, 90, 255, 1.0)',
-                fillcolor='rgba(0, 90, 255, 0.2)'
+                name='안전 기준선', line_color='rgba(49, 130, 189, 0.7)'
             ))
             fig_s.add_trace(go.Scatterpolar(
                 r=list(current_data.values()), theta=list(current_data.keys()), fill='toself',
