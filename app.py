@@ -190,11 +190,11 @@ if st.sidebar.button("🔍 위험도 예측하기"):
             fig_r = go.Figure()
             fig_r.add_trace(go.Scatterpolar(
                 r=avg_values, theta=categories, fill='toself',
-                name='기준값', line_color='rgba(49, 130, 189, 1.0)'
+                name='기준값', line_color='rgba(49, 130, 189, 0.7)'
             ))
             fig_r.add_trace(go.Scatterpolar(
                 r=user_values, theta=categories, fill='toself',
-                name='현재 입력값', line_color='rgba(227, 74, 51, 0.9)'
+                name='현재 입력값', line_color='rgba(227, 74, 51, 1.0)'
             ))
             fig_r.update_layout(
                 polar=dict(radialaxis=dict(visible=True, range=[0, max(user_values + avg_values) + 10])),
@@ -261,7 +261,7 @@ if st.sidebar.button("🔍 위험도 예측하기"):
             ))
             fig_s.add_trace(go.Scatterpolar(
                 r=list(current_data.values()), theta=list(current_data.keys()), fill='toself',
-                name='현재 시뮬레이션 수치', line_color='rgba(227, 74, 51, 0.9)'
+                name='현재 시뮬레이션 수치', line_color='rgba(227, 74, 51, 1.0)'
             ))
             fig_s.update_layout(
                 polar=dict(radialaxis=dict(visible=True)),
