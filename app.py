@@ -18,6 +18,23 @@ plt.rcParams['axes.unicode_minus'] = False
 
 API_URL = "https://seongnam-api.onrender.com/predict"
 
+# 🟢 법정동별 안전 기준선(평균치) 데이터
+dong_baselines = {
+    "수진1동": {'과속': 4, '중앙선 침범': 3, '신호위반': 15, '안전거리': 5, '안전운전': 30, '보행자': 3, '기타': 1},
+    "수진2동": {'과속': 2, '중앙선 침범': 1, '신호위반': 8,  '안전거리': 3, '안전운전': 20, '보행자': 1, '기타': 0},
+    "신흥1동": {'과속': 6, '중앙선 침범': 4, '신호위반': 20, '안전거리': 7, '안전운전': 40, '보행자': 5, '기타': 2},
+    "신흥2동": {'과속': 4, '중앙선 침범': 3, '신호위반': 15, '안전거리': 5, '안전운전': 30, '보행자': 3, '기타': 1},
+    "신흥3동": {'과속': 4, '중앙선 침범': 3, '신호위반': 15, '안전거리': 5, '안전운전': 30, '보행자': 3, '기타': 1},
+    "단대동":  {'과속': 4, '중앙선 침범': 3, '신호위반': 15, '안전거리': 5, '안전운전': 30, '보행자': 3, '기타': 1},
+    "은행동":  {'과속': 4, '중앙선 침범': 3, '신호위반': 15, '안전거리': 5, '안전운전': 30, '보행자': 3, '기타': 1},
+    "양지동":  {'과속': 4, '중앙선 침범': 3, '신호위반': 15, '안전거리': 5, '안전운전': 30, '보행자': 3, '기타': 1},
+    "태평1동": {'과속': 4, '중앙선 침범': 3, '신호위반': 15, '안전거리': 5, '안전운전': 30, '보행자': 3, '기타': 1},
+    "태평2동": {'과속': 4, '중앙선 침범': 3, '신호위반': 15, '안전거리': 5, '안전운전': 30, '보행자': 3, '기타': 1},
+    "태평3동": {'과속': 4, '중앙선 침범': 3, '신호위반': 15, '안전거리': 5, '안전운전': 30, '보행자': 3, '기타': 1},
+    "태평4동": {'과속': 4, '중앙선 침범': 3, '신호위반': 15, '안전거리': 5, '안전운전': 30, '보행자': 3, '기타': 1},
+}
+default_baseline = {'과속': 4, '중앙선 침범': 3, '신호위반': 15, '안전거리': 5, '안전운전': 30, '보행자': 3, '기타': 1}
+
 dong_options = {
     "수진1동": ("4113110100", 37.4386, 127.1378),
     "수진2동": ("4113110200", 37.4361, 127.1401),
@@ -43,17 +60,21 @@ st.sidebar.header("📝 조건 입력")
 year      = st.sidebar.selectbox("연도", list(range(2024, 2009, -1)))
 dong_name = st.sidebar.selectbox("법정동", list(dong_options.keys()))
 dong_code, lat, lng = dong_options[dong_name]
+
+# 🟢 선택한 동의 평균값 불러오기
+current_base = dong_baselines.get(dong_name, default_baseline)
+
 target    = st.sidebar.selectbox("사고 대상", target_options)
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("🚗 법규 위반 수치 입력")
-speeding   = st.sidebar.number_input("과속",                min_value=0, max_value=100, value=10)
-center     = st.sidebar.number_input("중앙선 침범",          min_value=0, max_value=50,  value=2)
-signal     = st.sidebar.number_input("신호위반",             min_value=0, max_value=100, value=10)
-safe_dist  = st.sidebar.number_input("안전거리 미확보",      min_value=0, max_value=100, value=5)
-duty       = st.sidebar.number_input("안전운전 의무 불이행", min_value=0, max_value=100, value=20)
-pedestrian = st.sidebar.number_input("보행자 보호의무 위반", min_value=0, max_value=50,  value=3)
-etc        = st.sidebar.number_input("기타",                 min_value=0, max_value=50,  value=1)
+speeding   = st.sidebar.number_input("과속",                min_value=0, max_value=100, value=current_base['과속'])
+center     = st.sidebar.number_input("중앙선 침범",          min_value=0, max_value=50,  value=current_base['중앙선 침범'])
+signal     = st.sidebar.number_input("신호위반",             min_value=0, max_value=100, value=current_base['신호위반'])
+safe_dist  = st.sidebar.number_input("안전거리 미확보",      min_value=0, max_value=100, value=current_base['안전거리'])
+duty       = st.sidebar.number_input("안전운전 의무 불이행", min_value=0, max_value=100, value=current_base['안전운전'])
+pedestrian = st.sidebar.number_input("보행자 보호의무 위반", min_value=0, max_value=50,  value=current_base['보행자'])
+etc        = st.sidebar.number_input("기타",                 min_value=0, max_value=50,  value=current_base['기타'])
 
 if st.sidebar.button("🔍 위험도 예측하기"):
     payload = {
@@ -85,8 +106,9 @@ if st.sidebar.button("🔍 위험도 예측하기"):
         with col2:
             st.write("")
             avg_check = {
-                '과속': 4, '중앙선 침범': 3, '신호위반': 15,
-                '안전거리 미확보': 5, '안전운전 의무 불이행': 30
+                '과속': current_base['과속'], '중앙선 침범': current_base['중앙선 침범'],
+                '신호위반': current_base['신호위반'], '안전거리 미확보': current_base['안전거리'],
+                '안전운전 의무 불이행': current_base['안전운전']
             }
             current_check = {
                 '과속': speeding, '중앙선 침범': center, '신호위반': signal,
@@ -114,7 +136,7 @@ if st.sidebar.button("🔍 위험도 예측하기"):
         )
         for name, (code, d_lat, d_lng) in dong_options.items():
             if name == dong_name:
-                color = "red" if status == "위험" else "green"
+                color = "red" if is_danger else "green"
                 folium.Marker(
                     [d_lat, d_lng],
                     popup=f"<b>{name}</b><br>위험지수: {score}점",
@@ -140,7 +162,7 @@ if st.sidebar.button("🔍 위험도 예측하기"):
                 y=list(shap.values()),
                 connector={"line": {"color": "rgba(0,0,0,0)"}},
                 increasing={"marker": {"color": "#ef4444"}},
-                decreasing={"marker": {"color": "#11CAA0"}},     
+                decreasing={"marker": {"color": "#11CAA0"}},
                 totals={"marker": {"color": "#34495e"}}
             ))
             fig.update_layout(
@@ -160,7 +182,8 @@ if st.sidebar.button("🔍 위험도 예측하기"):
             st.subheader("🕸️ 입력값 vs 기준값 비교")
             st.caption("빨간 영역이 파란 영역을 크게 벗어날수록 위험한 수치입니다.")
             categories  = ['과속', '중앙선 침범', '신호위반', '안전거리 미확보', '안전운전 의무 불이행']
-            avg_values  = [4.1, 2.5, 15.2, 5.0, 30.1]
+            # 🟢 current_base로 동기화
+            avg_values  = [current_base['과속'], current_base['중앙선 침범'], current_base['신호위반'], current_base['안전거리'], current_base['안전운전']]
             user_values = [speeding, center, signal, safe_dist, duty]
 
             fig_r = go.Figure()
@@ -213,9 +236,13 @@ if st.sidebar.button("🔍 위험도 예측하기"):
         st.markdown("### 🔮 교통안전 정책 시뮬레이터 (What-If Analysis)")
         st.caption("※ 기준: 사전 산출된 기준값 기반")
 
+        # 🟢 current_base로 동기화
         avg_data = {
-            '과속': 4, '중앙선 침범': 3, '신호위반': 15,
-            '안전거리 미확보': 5, '안전운전 의무 불이행': 30
+            '과속': current_base['과속'],
+            '중앙선 침범': current_base['중앙선 침범'],
+            '신호위반': current_base['신호위반'],
+            '안전거리 미확보': current_base['안전거리'],
+            '안전운전 의무 불이행': current_base['안전운전']
         }
         current_data = {
             '과속': speeding, '중앙선 침범': center, '신호위반': signal,
