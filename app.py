@@ -190,7 +190,7 @@ if st.sidebar.button("🔍 위험도 예측하기"):
             fig_r = go.Figure()
             fig_r.add_trace(go.Scatterpolar(
                 r=avg_values, theta=categories, fill='toself',
-                name='기준값', line_color='rgba(49, 130, 189, 0.7)'
+                name='기준값', line_color='rgba(49, 130, 189, 1.0)'
             ))
             fig_r.add_trace(go.Scatterpolar(
                 r=user_values, theta=categories, fill='toself',
