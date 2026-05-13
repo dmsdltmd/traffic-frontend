@@ -75,7 +75,7 @@ if st.sidebar.button("🔍 위험도 예측하기"):
     status = result.get("상태", "")
     shap   = result.get("SHAP_분석", {})
 
-   # ── 예측 결과 카드 ──
+    # ── 예측 결과 카드 ──
     st.markdown("---")
     st.subheader(f"📊 {dong_name} 예측 결과")
     with st.container(border=True):
@@ -98,7 +98,7 @@ if st.sidebar.button("🔍 위험도 예측하기"):
                 st.error("🚨 **위험 수준** : 단속 및 집중 관리가 필요한 지역입니다.")
             else:
                 st.success("✅ **안전 수준** : 비교적 안전하게 관리되고 있는 지역입니다.")
-                
+
     # ── 탭 3개 ──
     tab1, tab2, tab3 = st.tabs(["🚦 실시간 위험도 분석", "📊 인공지능 판단 근거", "🔮 정책 시뮬레이터"])
 
@@ -138,9 +138,9 @@ if st.sidebar.button("🔍 위험도 예측하기"):
                 textposition="outside",
                 text=[f"{v:+.1f}" for v in shap.values()],
                 y=list(shap.values()),
-                connector={"line": {"color": "rgb(63, 63, 63)"}},
-                decreasing={"marker": {"color": "#2ecc71"}},
-                increasing={"marker": {"color": "#e74c3c"}},
+                connector={"line": {"color": "rgba(0,0,0,0)"}},  
+                increasing={"marker": {"color": "#ef4444"}},      
+                decreasing={"marker": {"color": "#11CAA0"}},      
                 totals={"marker": {"color": "#34495e"}}
             ))
             fig.update_layout(
@@ -151,7 +151,7 @@ if st.sidebar.button("🔍 위험도 예측하기"):
             fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
             st.plotly_chart(fig, use_container_width=True)
 
-    # ── 탭2: 방사형 차트 + 변수 중요도 (원본 그대로) ──
+    # ── 탭2: 방사형 차트 + 변수 중요도 ──
     with tab2:
         st.markdown("---")
         col1, col2 = st.columns(2)
