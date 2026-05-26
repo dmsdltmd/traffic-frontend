@@ -190,11 +190,11 @@ if st.sidebar.button("🔍 위험도 예측하기"):
             fig_r = go.Figure()
             fig_r.add_trace(go.Scatterpolar(
                 r=avg_values, theta=categories, fill='toself',
-                name='기준값', line_color='rgba(49, 130, 189, 1.0)'  # ← 파란색 1.0
+                name='기준값', line_color='rgba(49, 130, 189, 1.0)'
             ))
             fig_r.add_trace(go.Scatterpolar(
                 r=user_values, theta=categories, fill='toself',
-                name='현재 입력값', line_color='rgba(227, 74, 51, 0.9)'  # ← 빨간색 원래대로
+                name='현재 입력값', line_color='rgba(227, 74, 51, 0.9)'
             ))
             fig_r.update_layout(
                 polar=dict(radialaxis=dict(visible=True, range=[0, max(user_values + avg_values) + 10])),
@@ -257,11 +257,11 @@ if st.sidebar.button("🔍 위험도 예측하기"):
             fig_s = go.Figure()
             fig_s.add_trace(go.Scatterpolar(
                 r=list(avg_data.values()), theta=list(avg_data.keys()), fill='toself',
-                name='안전 기준선', line_color='rgba(49, 130, 189, 1.0)'  # ← 파란색 1.0
+                name='안전 기준선', line_color='rgba(49, 130, 189, 1.0)'
             ))
             fig_s.add_trace(go.Scatterpolar(
                 r=list(current_data.values()), theta=list(current_data.keys()), fill='toself',
-                name='현재 시뮬레이션 수치', line_color='rgba(227, 74, 51, 0.9)'  # ← 빨간색 원래대로
+                name='현재 시뮬레이션 수치', line_color='rgba(227, 74, 51, 0.9)'
             ))
             fig_s.update_layout(
                 polar=dict(radialaxis=dict(visible=True)),
@@ -274,15 +274,27 @@ if st.sidebar.button("🔍 위험도 예측하기"):
         with col2:
             st.subheader("💡 정책 제안")
             st.caption("현재 입력값 기준으로 평균을 초과한 항목입니다.")
+
+            # 항목별 맞춤 권고 멘트
+            recommendations = {
+                '과속': "해당 구간 과속 단속 카메라(무인 단속기) 확충 및 속도 제한 표지판 정비를 권고합니다.",
+                '중앙선 침범': "중앙선 침범 다발 구간에 대한 노면 표시 재정비 및 집중 순찰을 권고합니다.",
+                '신호위반': "주요 교차로 신호 단속 카메라 증설 및 신호 체계 점검을 권고합니다.",
+                '안전거리 미확보': "고속화 도로 및 혼잡 구간 안전거리 확보 캠페인과 단속 강화를 권고합니다.",
+                '안전운전 의무 불이행': "스쿨존·실버존 내 안전운전 의무 교육 및 계도 활동 강화를 권고합니다.",
+            }
+            default_rec = "집중 단속 및 주민 대상 교통안전 캠페인 시행을 권고합니다."
+
             exceeded = {k: v for k, v in current_data.items() if v > avg_data[k]}
             if exceeded:
                 for item, val in exceeded.items():
                     avg = avg_data[item]
                     diff = val - avg
+                    rec = recommendations.get(item, default_rec)
                     st.warning(
                         f"⚠️ **{item}** : 현재 **{val}건** (평균 {avg}건 대비 **+{diff}건 초과**)\n\n"
                         f"안전 기준선으로 돌아가려면 **최소 {diff}건의 추가 단속**이 필요합니다. "
-                        f"집중 단속 및 주민 대상 교통안전 캠페인 시행을 권고합니다."
+                        f"{rec}"
                     )
                 st.error(
                     "🚨 **즉각적인 행정 조치가 필요합니다!**\n\n"
